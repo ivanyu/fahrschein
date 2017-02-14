@@ -1,42 +1,34 @@
 package org.zalando.fahrschein;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Collections;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CursorManagerDefaultMethodsTest {
+public class CursorManagerHelperTest {
 
     private final CursorManager cursorManager = mock(CursorManager.class);
 
-    @Before
-    public void setupMock() throws IOException {
-        doCallRealMethod().when(cursorManager).updatePartitions(any(), any());
-        doCallRealMethod().when(cursorManager).fromNewestAvailableOffsets(any(), any());
-        doCallRealMethod().when(cursorManager).fromOldestAvailableOffset(any(), any());
-    }
-
     private void run(@Nullable String initialOffset, String oldestAvailableOffset, String newestAvailableOffset, @Nullable String expectedOffset) throws IOException {
-        when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? emptyList() : singletonList(new Cursor("0", initialOffset)));
-        cursorManager.updatePartitions("test", singletonList(new Partition("0", oldestAvailableOffset, newestAvailableOffset)));
+        when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? Collections.<Cursor>emptyList() : singletonList(new Cursor("0", initialOffset)));
+        CursorManagerHelper.updatePartitions(cursorManager, "test", singletonList(new Partition("0", oldestAvailableOffset, newestAvailableOffset)));
         if (expectedOffset != null) {
             verify(cursorManager).onSuccess(eq("test"), refEq(new Cursor("0", expectedOffset)));
         } else {
-            verify(cursorManager, never()).onSuccess(any(), any());
+            verify(cursorManager, never()).onSuccess(anyString(), any(Cursor.class));
         }
     }
 

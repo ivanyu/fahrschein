@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,7 +26,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -114,7 +113,7 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("end")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo1\", \"foo2\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = client.subscription("nakadi-client-test", new HashSet<>(asList("foo1", "foo2")))
+        final Subscription subscription = client.subscription("nakadi-client-test", new LinkedHashSet<>(asList("foo1", "foo2")))
                 .withConsumerGroup("bar")
                 .subscribe();
 
@@ -122,11 +121,7 @@ public class NakadiClientTest {
         assertEquals("1234", subscription.getId());
         assertEquals("nakadi-client-test", subscription.getOwningApplication());
         assertEquals(2, subscription.getEventTypes().size());
-        Set<String> expectedRows = new HashSet<String>();
-        expectedRows.add("foo1");
-        expectedRows.add("foo2");
-        subscription.getEventTypes().stream().filter(eventType -> !expectedRows.contains(eventType)).forEach(eventType -> fail());
-        assertEquals(2, subscription.getEventTypes().size());
+        assertEquals(new HashSet<>(asList("foo1", "foo2")), subscription.getEventTypes());
         assertEquals("bar", subscription.getConsumerGroup());
         assertNotNull(subscription.getCreatedAt());
     }

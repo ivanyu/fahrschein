@@ -9,10 +9,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
-
-import static java.util.Optional.ofNullable;
 
 class StreamBuilders {
     abstract static class AbstractStreamBuilder implements StreamBuilder {
@@ -39,22 +36,24 @@ class StreamBuilders {
 
         protected abstract URI getURI(String queryString);
         protected abstract Set<String> getEventNames();
-        protected abstract Optional<Subscription> getSubscription();
-        protected abstract Optional<Lock> getLock();
+        @Nullable
+        protected abstract Subscription getSubscription();
+        @Nullable
+        protected abstract Lock getLock();
 
         @Override
         public final <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException {
-            final StreamParameters streamParameters = ofNullable(this.streamParameters).orElseGet(StreamParameters::new);
+            final StreamParameters streamParameters = this.streamParameters != null ? this.streamParameters : new StreamParameters();
             final String queryString = streamParameters.toQueryString();
 
             final URI uri = getURI(queryString);
             final Set<String> eventNames = getEventNames();
-            final Optional<Subscription> subscription = getSubscription();
-            final Optional<Lock> lock = getLock();
+            final Subscription subscription = getSubscription();
+            final Lock lock = getLock();
 
-            final BackoffStrategy backoffStrategy = ofNullable(this.backoffStrategy).orElseGet(ExponentialBackoffStrategy::new);
-            final ObjectMapper objectMapper = ofNullable(this.objectMapper).orElse(DefaultObjectMapper.INSTANCE);
-            final MetricsCollector metricsCollector = ofNullable(this.metricsCollector).orElse(NoMetricsCollector.NO_METRICS_COLLECTOR);
+            final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new ExponentialBackoffStrategy();
+            final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
+            final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector :NoMetricsCollector.NO_METRICS_COLLECTOR;
 
             final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, metricsCollector);
 
@@ -86,13 +85,13 @@ class StreamBuilders {
         }
 
         @Override
-        protected Optional<Subscription> getSubscription() {
-            return Optional.of(subscription);
+        protected Subscription getSubscription() {
+            return subscription;
         }
 
         @Override
-        protected Optional<Lock> getLock() {
-            return Optional.empty();
+        protected Lock getLock() {
+            return null;
         }
 
         @Override
@@ -141,13 +140,13 @@ class StreamBuilders {
         }
 
         @Override
-        protected Optional<Subscription> getSubscription() {
-            return Optional.empty();
+        protected Subscription getSubscription() {
+            return null;
         }
 
         @Override
-        protected Optional<Lock> getLock() {
-            return ofNullable(lock);
+        protected Lock getLock() {
+            return lock;
         }
 
         @Override

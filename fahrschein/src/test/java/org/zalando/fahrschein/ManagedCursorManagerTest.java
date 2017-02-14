@@ -12,9 +12,9 @@ import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,7 +51,7 @@ public class ManagedCursorManagerTest {
                 .andExpect(jsonPath("$.items[0].cursor_token", equalTo("token")))
                 .andRespond(withNoContent());
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", new Date());
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, "stream-id");
 
@@ -64,7 +64,7 @@ public class ManagedCursorManagerTest {
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", new Date());
         cursorManager.addSubscription(subscription);
 
         final Collection<Cursor> cursors = cursorManager.getCursors("foo");
